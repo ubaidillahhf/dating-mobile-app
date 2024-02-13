@@ -1,0 +1,46 @@
+version: "3.5"
+
+services:
+  dating-service:
+    platform: linux/amd64 #uncomment when build in silicon mac m1
+    container_name: dating-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8910:8910"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  migrate:
+    image: migrate/migrate:v4.15.2
+    volumes:
+      - ./db/migration:/migrations
+    entrypoint:
+      [
+        "migrate",
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://postgres:password@postgres:5432/dating_service?sslmode=disable"
+      ]
+    command: [ "up" ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  postgres:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=dating_service
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
