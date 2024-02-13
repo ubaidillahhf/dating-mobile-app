@@ -10,6 +10,6 @@ func NewAppUseCase(
 	UserRepo repository.IUserRepository,
 ) AppUseCase {
 	return AppUseCase{
-		UserUsecase: NewUserUsecase(&UserRepo),
+		UserUsecase: NewUserUsecase(UserRepo),
 	}
 }

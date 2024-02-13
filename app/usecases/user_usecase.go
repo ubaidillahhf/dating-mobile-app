@@ -19,9 +19,9 @@ type IUserUsecase interface {
 	Login(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, *exception.Error)
 }
 
-func NewUserUsecase(repo *repository.IUserRepository) IUserUsecase {
+func NewUserUsecase(repo repository.IUserRepository) IUserUsecase {
 	return &userUsecase{
-		repo: *repo,
+		repo: repo,
 	}
 }
 

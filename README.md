@@ -1,6 +1,6 @@
 # GoLang Dating Service
 
-> Author: Ubaidillah Hakim Fadly
+> Author: Ubaidillah Hakim Fadly \
 > Purpose: Case Study
 
 ### Prequisite tools
