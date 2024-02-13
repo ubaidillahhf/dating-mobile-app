@@ -18,3 +18,7 @@
     npm install -g dbdocs
     dbdocs login
     ```
+
+### Documentation
+
+- Access the DB documentation at [this address](https://dbdocs.io/ubed.dev/dating-service)

@@ -16,4 +16,4 @@ migrate_down_1:
 	migrate -path db/migration -database ${PSQL_MIGRATION_URL} -verbose down 1
 
 db_docs:
-	dbdocs build doc/db.dbml
+	dbdocs build db/database.dbml
