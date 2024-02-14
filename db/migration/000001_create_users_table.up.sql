@@ -14,9 +14,9 @@ BEGIN
           THEN
                CREATE TABLE users (
                     id varchar not null primary key,
-                    username varchar not null,
+                    username varchar not null unique,
                     fullname varchar not null,
-                    email varchar not null,
+                    email varchar not null unique,
                     password varchar not null,
                     image varchar,
                     gender gender_enum not null default 'undisclosed',

@@ -19,10 +19,12 @@ func main() {
 
 	// Setup Repository
 	userRepository := repository.NewUserRepository(database)
+	swipeRepository := repository.NewSwipeRepository(database)
 
 	// Setup Service
 	useCase := usecases.NewAppUseCase(
 		userRepository,
+		swipeRepository,
 	)
 
 	router.Init(useCase, configuration)

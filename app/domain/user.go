@@ -37,3 +37,9 @@ type (
 		Token string `json:"token"`
 	}
 )
+
+const (
+	Male        = "male"
+	Female      = "female"
+	Undisclosed = "undisclosed"
+)

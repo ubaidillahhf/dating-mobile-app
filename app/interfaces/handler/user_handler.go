@@ -9,6 +9,7 @@ import (
 	"github.com/ubaidillahhf/dating-service/app/domain"
 	"github.com/ubaidillahhf/dating-service/app/infra/exception"
 	"github.com/ubaidillahhf/dating-service/app/infra/presenter"
+	"github.com/ubaidillahhf/dating-service/app/infra/utility/helper"
 	xvalidator "github.com/ubaidillahhf/dating-service/app/infra/validator"
 	"github.com/ubaidillahhf/dating-service/app/usecases"
 )
@@ -16,15 +17,17 @@ import (
 type IUserHandler interface {
 	Register(c *fiber.Ctx) error
 	Login(c *fiber.Ctx) error
+	Update(c *fiber.Ctx) error
+	GetRandomProfiles(*fiber.Ctx) error
 }
 
 type userHandler struct {
-	userUsecase usecases.IUserUsecase
+	uc usecases.IUserUsecase
 }
 
-func NewUserHandler(userUsecase *usecases.IUserUsecase) IUserHandler {
+func NewUserHandler(uc *usecases.IUserUsecase) IUserHandler {
 	return &userHandler{
-		userUsecase: *userUsecase,
+		uc: *uc,
 	}
 }
 
@@ -32,7 +35,7 @@ func (co *userHandler) Register(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	request := new(domain.RegisterRequest)
+	request := domain.RegisterRequest{}
 	if err := c.BodyParser(&request); err != nil {
 		return c.JSON(presenter.Error(err.Error(), nil, exception.BadRequestError))
 	}
@@ -42,13 +45,7 @@ func (co *userHandler) Register(c *fiber.Ctx) error {
 		return c.JSON(presenter.Error("error", xvalidator.GenerateHumanizeError(request, err), exception.BadRequestError))
 	}
 
-	newData := domain.User{
-		Fullname: request.Fullname,
-		Username: request.Username,
-		Email:    request.Email,
-		Password: request.Password,
-	}
-	res, resErr := co.userUsecase.Register(ctx, newData)
+	res, resErr := co.uc.Register(ctx, request)
 	if resErr != nil {
 		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
 	}
@@ -78,7 +75,7 @@ func (co *userHandler) Login(c *fiber.Ctx) error {
 		Email:    request.Email,
 		Password: request.Password,
 	}
-	res, resErr := co.userUsecase.Login(ctx, newData)
+	res, resErr := co.uc.Login(ctx, newData)
 	if resErr != nil {
 		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
 	}
@@ -88,4 +85,54 @@ func (co *userHandler) Login(c *fiber.Ctx) error {
 		Token: res.Token,
 	}
 	return c.JSON(presenter.Success("Success", newRes, nil))
+}
+
+func (co *userHandler) GetRandomProfiles(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	myId := c.Locals("myId").(string)
+
+	queryParam := domain.Meta{}
+	if err := c.QueryParser(&queryParam); err != nil {
+		return c.JSON(presenter.Error(err.Error(), nil, fiber.StatusBadRequest))
+	}
+
+	skip, limit := helper.ConvToSkipLimit(queryParam.Page, queryParam.PerPage)
+
+	responses, countTotal, err := co.uc.GetRandomProfiles(ctx, domain.Meta{Skip: skip, Limit: limit}, myId)
+	if err != nil {
+		return c.JSON(presenter.Error(err.Err.Error(), nil, err.Code))
+	}
+
+	return c.JSON(presenter.Success("Success", responses, presenter.Meta(presenter.MetaProps{
+		Page:    queryParam.Page,
+		PerPage: queryParam.PerPage,
+		Total:   countTotal,
+	})))
+}
+
+func (co *userHandler) Update(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	request := domain.User{}
+	if err := c.BodyParser(&request); err != nil {
+		return c.JSON(presenter.Error(err.Error(), nil, exception.BadRequestError))
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(request); err != nil {
+		return c.JSON(presenter.Error("error", xvalidator.GenerateHumanizeError(request, err), exception.BadRequestError))
+	}
+
+	myId := c.Locals("myId").(string)
+	request.Id = myId
+
+	res, resErr := co.uc.UpdateProfile(ctx, request)
+	if resErr != nil {
+		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
+	}
+
+	return c.JSON(presenter.Success("Success", res, nil))
 }

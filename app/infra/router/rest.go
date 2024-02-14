@@ -1,8 +1,6 @@
 package router
 
 import (
-	"fmt"
-
 	"github.com/gofiber/contrib/fibersentry"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -10,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/ubaidillahhf/dating-service/app/infra/config"
 	"github.com/ubaidillahhf/dating-service/app/interfaces/handler"
+	"github.com/ubaidillahhf/dating-service/app/interfaces/middleware"
 	"github.com/ubaidillahhf/dating-service/app/usecases"
 )
 
@@ -34,6 +33,7 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 
 	// hadler
 	userHandler := handler.NewUserHandler(&useCase.UserUsecase)
+	swipeHandler := handler.NewSwipeHandler(&useCase.SwipeUsecase)
 
 	// service route
 	router.Get("/", handler.GetTopRoute)
@@ -44,19 +44,11 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 	user := v1.Group("/users")
 	user.Post("/register", userHandler.Register)
 	user.Post("/login", userHandler.Login)
+	user.Patch("/", middleware.ValidateToken, userHandler.Update)
+	user.Get("/find-match", middleware.ValidateToken, userHandler.GetRandomProfiles)
 
-	router.Get("/error", func(c *fiber.Ctx) error {
-
-		type some struct {
-			coba *int
-		}
-
-		newSome := new(some)
-
-		fmt.Println(*newSome.coba)
-
-		return c.JSON("ok")
-	})
+	swipe := v1.Group("/swipes")
+	swipe.Post("/", middleware.ValidateToken, swipeHandler.Swipe)
 
 	router.Listen(":" + conf.Get("PORT"))
 }

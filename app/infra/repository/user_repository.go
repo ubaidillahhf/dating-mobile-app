@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jinzhu/now"
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -18,6 +19,7 @@ type IUserRepository interface {
 	FindByIdentifier(ctx context.Context, username, email string) (domain.User, error)
 	Update(ctx context.Context, newData domain.User) (bool, error)
 	Get(ctx context.Context, meta domain.Meta, myId string, excludeSeenDaily bool) ([]domain.User, int64, error)
+	SenderReceiverValidation(ctx context.Context, senderId, receiverId string) (bool, error)
 }
 
 func NewUserRepository(db *gorm.DB) IUserRepository {
@@ -32,18 +34,14 @@ type userRepository struct {
 
 func (repo *userRepository) Insert(ctx context.Context, newData domain.User) (res domain.User, err error) {
 
-	nd := domain.User{
-		Id:       gonanoid.Must(),
-		Email:    newData.Email,
-		Password: newData.Password,
-	}
+	newData.Id = gonanoid.Must()
 
-	if err := repo.conn.WithContext(ctx).Table("users").Create(&nd).Error; err != nil {
+	if err := repo.conn.WithContext(ctx).Table("users").Create(&newData).Error; err != nil {
 		logx.Create().Error().Msg(fmt.Sprintf("error: at repository when create user. Detail: %v", err))
 		return res, errors.New("error: when create user")
 	}
 
-	return nd, nil
+	return newData, nil
 }
 
 func (repo *userRepository) FindByIdentifier(ctx context.Context, username, email string) (res domain.User, err error) {
@@ -64,6 +62,27 @@ func (repo *userRepository) Update(ctx context.Context, newData domain.User) (re
 	if newData.Fullname != "" {
 		newUpdate["fullname"] = newData.Fullname
 	}
+	if newData.Email != "" {
+		newUpdate["email"] = newData.Email
+	}
+	if newData.Gender != "" {
+		newUpdate["gender"] = newData.Gender
+	}
+	if newData.Image != "" {
+		newUpdate["image"] = newData.Image
+	}
+	if newData.Username != "" {
+		newUpdate["username"] = newData.Username
+	}
+	if newData.Dob != (time.Time{}) {
+		newUpdate["dob"] = newData.Dob
+	}
+	if newData.IsPremium == 1 {
+		newUpdate["is_premium"] = newData.IsPremium
+	}
+	if newData.Password != "" {
+		newUpdate["password"] = newData.Password
+	}
 
 	if err := repo.conn.WithContext(ctx).Table("users").
 		Where("id = ?", newData.Id).
@@ -72,7 +91,7 @@ func (repo *userRepository) Update(ctx context.Context, newData domain.User) (re
 		return false, errors.New("error: when update user")
 	}
 
-	return
+	return true, nil
 }
 
 func (repo *userRepository) Get(ctx context.Context, meta domain.Meta, myId string, excludeSeenDaily bool) (res []domain.User, total int64, err error) {
@@ -95,11 +114,27 @@ func (repo *userRepository) Get(ctx context.Context, meta domain.Meta, myId stri
 	if err := q.
 		Count(&total).
 		Order("RAND()").
-		Scopes(helper.Paginate(meta.Page, meta.PerPage)).
+		Scopes(helper.GormPaginate(meta.Skip, meta.Limit)).
 		Find(&res).Error; err != nil {
 		logx.Create().Error().Msg(fmt.Sprintf("error: at repository when get user. Detail: %v", err))
 		return res, total, errors.New("error: at repository when get media")
 	}
 
 	return res, total, nil
+}
+
+func (repo *userRepository) SenderReceiverValidation(ctx context.Context, senderId, receiverId string) (res bool, err error) {
+
+	valid := []domain.User{}
+
+	if err := repo.conn.WithContext(ctx).Table("users").
+		Where("id IN ?", []string{senderId, receiverId}).
+		Find(&valid).Error; err != nil {
+		logx.Create().Error().Msg(fmt.Sprintf("error: at repository when get detail user. Detail: %v", err))
+		return res, errors.New("error: when get detail user")
+	}
+
+	validCount := len(valid) == 2
+
+	return validCount, nil
 }

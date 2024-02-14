@@ -15,9 +15,9 @@ import (
 )
 
 type IUserUsecase interface {
-	Register(ctx context.Context, request domain.User) (domain.User, *exception.Error)
+	Register(ctx context.Context, request domain.RegisterRequest) (domain.User, *exception.Error)
 	Login(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, *exception.Error)
-	Update(ctx context.Context, request domain.User) (bool, *exception.Error)
+	UpdateProfile(ctx context.Context, request domain.User) (bool, *exception.Error)
 	GetRandomProfiles(ctx context.Context, meta domain.Meta, myId string) ([]domain.User, int64, *exception.Error)
 }
 
@@ -31,7 +31,7 @@ type userUsecase struct {
 	repo repository.IUserRepository
 }
 
-func (uc *userUsecase) Register(ctx context.Context, request domain.User) (res domain.User, err *exception.Error) {
+func (uc *userUsecase) Register(ctx context.Context, request domain.RegisterRequest) (res domain.User, err *exception.Error) {
 
 	data, _ := uc.repo.FindByIdentifier(ctx, request.Username, request.Email)
 	if data != (domain.User{}) {
@@ -47,8 +47,11 @@ func (uc *userUsecase) Register(ctx context.Context, request domain.User) (res d
 
 	hashPwd, _ := helper.HashPassword(request.Password)
 	newData := domain.User{
+		Username: request.Username,
+		Fullname: request.Fullname,
 		Email:    request.Email,
 		Password: hashPwd,
+		Gender:   domain.Undisclosed,
 	}
 
 	p, pErr := uc.repo.Insert(ctx, newData)
@@ -87,15 +90,19 @@ func (uc *userUsecase) Login(ctx context.Context, req domain.LoginRequest) (res 
 	return res, nil
 }
 
-func (uc *userUsecase) Update(ctx context.Context, request domain.User) (res bool, err *exception.Error) {
+func (uc *userUsecase) UpdateProfile(ctx context.Context, request domain.User) (res bool, err *exception.Error) {
 
-	if request.Username != "" || request.Email != "" {
-		data, _ := uc.repo.FindByIdentifier(ctx, request.Username, request.Email)
-		if data != (domain.User{}) {
-			return res, &exception.Error{
-				Code: exception.BadRequestError,
-				Err:  errors.New("username or email already registered"),
-			}
+	if request.Id == "" {
+		return res, &exception.Error{
+			Code: exception.BadRequestError,
+			Err:  errors.New("error: unknown userId"),
+		}
+	}
+
+	if request.Username != "" || request.Email != "" || request.Password != "" {
+		return res, &exception.Error{
+			Code: exception.BadRequestError,
+			Err:  errors.New("username, email, and password can't be change from this ep"),
 		}
 	}
 
@@ -112,10 +119,7 @@ func (uc *userUsecase) Update(ctx context.Context, request domain.User) (res boo
 
 func (uc *userUsecase) GetRandomProfiles(ctx context.Context, meta domain.Meta, myId string) (res []domain.User, t int64, err *exception.Error) {
 
-	data, total, dErr := uc.repo.Get(ctx, domain.Meta{
-		Page:    1,
-		PerPage: 10,
-	}, myId, true)
+	data, total, dErr := uc.repo.Get(ctx, meta, myId, true)
 	if dErr != nil {
 		return res, t, &exception.Error{
 			Code: exception.IntenalError,

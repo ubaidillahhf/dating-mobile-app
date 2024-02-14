@@ -1,8 +1,8 @@
 Table users as U {
     id varchar [pk]
-    username varchar [not null]
+    username varchar [not null,unique]
     fullname varchar [not null]
-    email varchar [not null]
+    email varchar [not null,unique]
     password varchar [not null]
     image varchar
     gender tinyint [not null]
