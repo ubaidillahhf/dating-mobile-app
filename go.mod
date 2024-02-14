@@ -44,6 +44,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/iancoleman/strcase v0.3.0
+	github.com/jinzhu/copier v0.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/rs/zerolog v1.32.0
 	github.com/stretchr/testify v1.8.4

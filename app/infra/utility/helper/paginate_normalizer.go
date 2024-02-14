@@ -2,7 +2,7 @@ package helper
 
 import "gorm.io/gorm"
 
-func ConvToSkipLimit(page, perPage int64) (skip, limit int) {
+func NormalizeAndGetDefaultPagination(page, perPage int64) (skip, limit int, defPage, defPerPage int64) {
 
 	// page 2, perPage 10 = skip 10, limit 10
 	// page 3, perPage 10 = skip 20. limit 10
@@ -10,6 +10,9 @@ func ConvToSkipLimit(page, perPage int64) (skip, limit int) {
 	p, pp := paginationDefault(page, perPage)
 	skip = int((p - 1) * pp)
 	limit = int(pp)
+
+	defPage = p
+	defPerPage = pp
 
 	return
 }

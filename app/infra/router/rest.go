@@ -46,6 +46,7 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 	user.Post("/login", userHandler.Login)
 	user.Patch("/", middleware.ValidateToken, userHandler.Update)
 	user.Get("/find-match", middleware.ValidateToken, userHandler.GetRandomProfiles)
+	user.Get("/my-profile", middleware.ValidateToken, userHandler.MyProfile)
 
 	swipe := v1.Group("/swipes")
 	swipe.Post("/", middleware.ValidateToken, swipeHandler.Swipe)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jinzhu/copier"
 	"github.com/ubaidillahhf/dating-service/app/domain"
 	"github.com/ubaidillahhf/dating-service/app/infra/exception"
 	"github.com/ubaidillahhf/dating-service/app/infra/presenter"
@@ -19,6 +20,7 @@ type IUserHandler interface {
 	Login(c *fiber.Ctx) error
 	Update(c *fiber.Ctx) error
 	GetRandomProfiles(*fiber.Ctx) error
+	MyProfile(*fiber.Ctx) error
 }
 
 type userHandler struct {
@@ -98,16 +100,16 @@ func (co *userHandler) GetRandomProfiles(c *fiber.Ctx) error {
 		return c.JSON(presenter.Error(err.Error(), nil, fiber.StatusBadRequest))
 	}
 
-	skip, limit := helper.ConvToSkipLimit(queryParam.Page, queryParam.PerPage)
+	skip, limit, defPage, defPerPage := helper.NormalizeAndGetDefaultPagination(queryParam.Page, queryParam.PerPage)
 
 	responses, countTotal, err := co.uc.GetRandomProfiles(ctx, domain.Meta{Skip: skip, Limit: limit}, myId)
 	if err != nil {
 		return c.JSON(presenter.Error(err.Err.Error(), nil, err.Code))
 	}
 
-	return c.JSON(presenter.Success("Success", responses, presenter.Meta(presenter.MetaProps{
-		Page:    queryParam.Page,
-		PerPage: queryParam.PerPage,
+	return c.JSON(presenter.Success("Success", presenter.FindMatchTransform(responses), presenter.Meta(presenter.MetaProps{
+		Page:    defPage,
+		PerPage: defPerPage,
 		Total:   countTotal,
 	})))
 }
@@ -135,4 +137,21 @@ func (co *userHandler) Update(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(presenter.Success("Success", res, nil))
+}
+
+func (co *userHandler) MyProfile(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	myId := c.Locals("myId").(string)
+
+	res, resErr := co.uc.GetProfile(ctx, myId)
+	if resErr != nil {
+		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
+	}
+
+	profileResponse := domain.ProfileResponse{}
+	copier.Copy(&profileResponse, &res)
+
+	return c.JSON(presenter.Success("Success", profileResponse, nil))
 }

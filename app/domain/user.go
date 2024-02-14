@@ -36,6 +36,17 @@ type (
 		Email string `json:"email"`
 		Token string `json:"token"`
 	}
+
+	ProfileResponse struct {
+		Id        string    `json:"id"`
+		Username  string    `json:"username"`
+		Fullname  string    `json:"fullname"`
+		Email     string    `json:"email"`
+		Image     string    `json:"image"`
+		Gender    string    `json:"gender"`
+		Dob       time.Time `json:"dob"`
+		IsPremium int       `json:"is_premium"`
+	}
 )
 
 const (

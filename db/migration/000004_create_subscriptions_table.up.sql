@@ -19,7 +19,6 @@ BEGIN
                 user_id varchar not null,
                 premium_packages_id bigint not null,
                 status subscription_status_enum not null default 'pending',
-                repeat smallint not null default 0,
                 end_at timestamptz not null,
                 created_at timestamptz not null default now(),
                 updated_at timestamptz not null default now(),

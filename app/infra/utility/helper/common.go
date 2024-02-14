@@ -3,6 +3,7 @@ package helper
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/iancoleman/strcase"
 	gonanoid "github.com/matoous/go-nanoid/v2"
@@ -29,5 +30,23 @@ func ConvLastStructNameToCamelCase(data string) string {
 	strArr[lastIndex] = convLastStr
 
 	return strings.Join(strArr[1:], ".")
+
+}
+
+func GetAgeFromDob(dob time.Time) string {
+
+	dobYear := dob.Year()
+	if dobYear == 1 {
+		return "undisclosed"
+	}
+
+	now := time.Now()
+	age := now.Year() - dobYear
+
+	if now.YearDay() < dob.YearDay() {
+		age--
+	}
+
+	return fmt.Sprintf("%d yo", age)
 
 }

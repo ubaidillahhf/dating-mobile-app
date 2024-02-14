@@ -19,6 +19,7 @@ type IUserUsecase interface {
 	Login(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, *exception.Error)
 	UpdateProfile(ctx context.Context, request domain.User) (bool, *exception.Error)
 	GetRandomProfiles(ctx context.Context, meta domain.Meta, myId string) ([]domain.User, int64, *exception.Error)
+	GetProfile(ctx context.Context, myId string) (domain.User, *exception.Error)
 }
 
 func NewUserUsecase(repo repository.IUserRepository) IUserUsecase {
@@ -54,7 +55,7 @@ func (uc *userUsecase) Register(ctx context.Context, request domain.RegisterRequ
 		Gender:   domain.Undisclosed,
 	}
 
-	p, pErr := uc.repo.Insert(ctx, newData)
+	p, pErr := uc.repo.Create(ctx, newData)
 	if pErr != nil {
 		return res, &exception.Error{
 			Code: exception.IntenalError,
@@ -128,4 +129,16 @@ func (uc *userUsecase) GetRandomProfiles(ctx context.Context, meta domain.Meta, 
 	}
 
 	return data, total, nil
+}
+
+func (uc *userUsecase) GetProfile(ctx context.Context, myId string) (res domain.User, err *exception.Error) {
+	data, dErr := uc.repo.Find(ctx, myId)
+	if dErr != nil {
+		return res, &exception.Error{
+			Code: exception.IntenalError,
+			Err:  dErr,
+		}
+	}
+
+	return data, nil
 }
