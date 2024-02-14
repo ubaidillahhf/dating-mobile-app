@@ -8,8 +8,8 @@ Table users as U {
     gender tinyint [not null]
     dob datetime [not null]
     is_premium tinyint
-    created_at timestamp
-    updated_at timestamp
+    created_at timestamp [default: `now()`]
+    updated_at timestamp [default: `now()`]
     deleted_at timestamp
 }
 
@@ -18,7 +18,7 @@ Table swipes as S {
     sender_id varchar [not null, ref: > U.id]
     receiver_id varchar [not null, ref: > U.id]
     direction tinyint [not null]
-    created_at timestamp
+    created_at timestamp [default: `now()`]
     deleted_at timestamp
 }
 
@@ -27,10 +27,11 @@ Table premium_packages as PP {
     image varchar
     name varchar [not null]
     description varchar
-    price decimal(12,2) [not null]
+    price decimal(16,2) [not null]
     duration_in_days int [not null]
-    created_at timestamp
-    updated_at timestamp
+    repeat tinyint [not null, default:0, note:'can subscribe one time only']
+    created_at timestamp [default: `now()`]
+    updated_at timestamp [default: `now()`]
     deleted_at timestamp 
 }
 
@@ -49,11 +50,13 @@ Table subscriptions {
     status subscriptions_status
     repeat tinyint [not null, default:0, note:'can subscribe one time only']
     end_at timestamp [not null]
-    created_at timestamp
+    created_at timestamp [default: `now()`]
+    updated_at timestamp [default: `now()`]
     deleted_at timestamp 
 }
 
 Enum payments_status {
+  waiting
   success
   failed
 }
@@ -65,10 +68,13 @@ Enum payments_context {
 Table payments {
     id varchar [pk]
     user_id varchar [not null, ref: > U.id]
-    ref_context payments_context
-    ref_id varchar
-    amount decimal(12,2) [not null]
-    external_id varchar
-    method varchar [note: 'ex: debit card, digital wallet, apple pay, google pay, paypal']
-    status payments_status
+    ref_context payments_context [not null, default:'subscription']
+    ref_id varchar [not null]
+    amount decimal(16,2) [not null]
+    external_id varchar [not null, note:'payment gateway refer id']
+    method varchar [not null, note: 'ex: debit card, digital wallet, apple pay, google pay, paypal']
+    status payments_status [not null, default:'waiting']
+    created_at timestamp [default: `now()`]
+    updated_at timestamp [default: `now()`]
+    deleted_at timestamp 
 }

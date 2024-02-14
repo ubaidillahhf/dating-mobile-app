@@ -1,11 +1,17 @@
 package domain
 
+import "time"
+
 type User struct {
-	Id       string `json:"id"`
-	Username string `json:"username"`
-	Fullname string `json:"fullname"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Id        string    `json:"id"`
+	Username  string    `json:"username"`
+	Fullname  string    `json:"fullname"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	Image     string    `json:"image"`
+	Gender    string    `json:"gender"`
+	Dob       time.Time `json:"dob"`
+	IsPremium int       `json:"is_premium"`
 }
 
 type (

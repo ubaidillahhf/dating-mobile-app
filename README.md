@@ -6,22 +6,35 @@
 > \
 > *Our dating application service offers a streamlined experience, allowing users to register and login effortlessly. With intuitive swipe gestures, users can swiftly navigate through profiles, swiping left to pass or right to express interest. To ensure quality matches, users are presented with a curated selection of 10 profiles daily, eliminating repeat views. Additionally, users have the option to purchase a premium package, granting unlimited swipes and access to enhanced features for an enriched dating experience.*
 
+### Running with docker composer
+
+1. run
+```bash
+    docker composer up -d
+```
+2. app is running, and ready to GO
+
+### Running development with live reload
+
+1. install [Air](https://github.com/cosmtrek/air)
+2. create .air.toml at root (if not exist)
+3. run
+```bash
+    air
+```
+
 ### Prequisite tools
 - [Migrate](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
-
-    ```bash
-    brew install golang-migrate
-    ```
-
-- [Docker desktop](https://www.docker.com/products/docker-desktop)
+- [Docker](https://www.docker.com/)
 - [Golang](https://golang.org/)
 - [DB Docs](https://dbdocs.io/docs)
-
-    ```bash
-    npm install -g dbdocs
-    dbdocs login
-    ```
 
 ### Documentation
 
 - Access the DB documentation at [this address](https://dbdocs.io/ubed.dev/dating-service)
+
+### Create new migration
+- Example:
+```bash
+    make new_migration name="create_users_table"
+```

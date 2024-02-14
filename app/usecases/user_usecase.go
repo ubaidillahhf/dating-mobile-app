@@ -17,6 +17,8 @@ import (
 type IUserUsecase interface {
 	Register(ctx context.Context, request domain.User) (domain.User, *exception.Error)
 	Login(ctx context.Context, request domain.LoginRequest) (domain.LoginResponse, *exception.Error)
+	Update(ctx context.Context, request domain.User) (bool, *exception.Error)
+	GetRandomProfiles(ctx context.Context, meta domain.Meta, myId string) ([]domain.User, int64, *exception.Error)
 }
 
 func NewUserUsecase(repo repository.IUserRepository) IUserUsecase {
@@ -34,7 +36,7 @@ func (uc *userUsecase) Register(ctx context.Context, request domain.User) (res d
 	data, _ := uc.repo.FindByIdentifier(ctx, request.Username, request.Email)
 	if data != (domain.User{}) {
 		return res, &exception.Error{
-			Code: 400,
+			Code: exception.BadRequestError,
 			Err:  errors.New("username or email already registered"),
 		}
 	}
@@ -51,7 +53,10 @@ func (uc *userUsecase) Register(ctx context.Context, request domain.User) (res d
 
 	p, pErr := uc.repo.Insert(ctx, newData)
 	if pErr != nil {
-		return res, pErr
+		return res, &exception.Error{
+			Code: exception.IntenalError,
+			Err:  pErr,
+		}
 	}
 
 	return p, nil
@@ -80,4 +85,43 @@ func (uc *userUsecase) Login(ctx context.Context, req domain.LoginRequest) (res 
 	}
 
 	return res, nil
+}
+
+func (uc *userUsecase) Update(ctx context.Context, request domain.User) (res bool, err *exception.Error) {
+
+	if request.Username != "" || request.Email != "" {
+		data, _ := uc.repo.FindByIdentifier(ctx, request.Username, request.Email)
+		if data != (domain.User{}) {
+			return res, &exception.Error{
+				Code: exception.BadRequestError,
+				Err:  errors.New("username or email already registered"),
+			}
+		}
+	}
+
+	p, pErr := uc.repo.Update(ctx, request)
+	if pErr != nil {
+		return res, &exception.Error{
+			Code: exception.IntenalError,
+			Err:  pErr,
+		}
+	}
+
+	return p, nil
+}
+
+func (uc *userUsecase) GetRandomProfiles(ctx context.Context, meta domain.Meta, myId string) (res []domain.User, t int64, err *exception.Error) {
+
+	data, total, dErr := uc.repo.Get(ctx, domain.Meta{
+		Page:    1,
+		PerPage: 10,
+	}, myId, true)
+	if dErr != nil {
+		return res, t, &exception.Error{
+			Code: exception.IntenalError,
+			Err:  dErr,
+		}
+	}
+
+	return data, total, nil
 }
