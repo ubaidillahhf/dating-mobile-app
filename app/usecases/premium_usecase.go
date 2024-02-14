@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/jinzhu/copier"
 	"github.com/ubaidillahhf/dating-service/app/domain"
 	"github.com/ubaidillahhf/dating-service/app/infra/exception"
 	"github.com/ubaidillahhf/dating-service/app/infra/repository"
@@ -14,8 +16,8 @@ import (
 
 type IPremiumUsecase interface {
 	GetPackagePremium(ctx context.Context, meta domain.Meta) ([]domain.PremiumPackage, int64, *exception.Error)
-	OrderPackage(ctx context.Context, myId string, packageId int64) (domain.Subscription, *exception.Error)
-	PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (domain.Payment, *exception.Error)
+	OrderPackage(ctx context.Context, myId string, packageId int64) (domain.SubscriptionResponse, *exception.Error)
+	PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (bool, *exception.Error)
 }
 
 func NewPremiumUsecase(
@@ -54,7 +56,7 @@ func (uc *premiumUsecase) GetPackagePremium(ctx context.Context, meta domain.Met
 	return data, total, nil
 }
 
-func (uc *premiumUsecase) PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (res domain.Payment, err *exception.Error) {
+func (uc *premiumUsecase) PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (res bool, err *exception.Error) {
 
 	paymentStatus := domain.PaymentWaiting
 	subsStatus := domain.SubsPending
@@ -106,15 +108,16 @@ func (uc *premiumUsecase) PaymentCallback(ctx context.Context, data domain.Payme
 
 	}
 
-	if _, err := uc.paymentRepo.UpdateTx(ctx, tx, domain.Payment{
+	payment, pyErr := uc.paymentRepo.UpdateTx(ctx, tx, domain.Payment{
 		Id:     paymentId,
 		Status: paymentStatus,
-	}); err != nil {
+	})
+	if pyErr != nil {
 		uc.gormTx.Rollback(tx)
 
 		return res, &exception.Error{
 			Code: exception.IntenalError,
-			Err:  err,
+			Err:  pyErr,
 		}
 	}
 
@@ -140,10 +143,10 @@ func (uc *premiumUsecase) PaymentCallback(ctx context.Context, data domain.Payme
 
 	uc.gormTx.Commit(tx)
 
-	return
+	return payment, nil
 }
 
-func (uc *premiumUsecase) OrderPackage(ctx context.Context, myId string, packageId int64) (res domain.Subscription, err *exception.Error) {
+func (uc *premiumUsecase) OrderPackage(ctx context.Context, myId string, packageId int64) (res domain.SubscriptionResponse, err *exception.Error) {
 
 	detailPremiumPkg, dpmErr := uc.repo.Find(ctx, packageId)
 	if dpmErr != nil {
@@ -161,10 +164,12 @@ func (uc *premiumUsecase) OrderPackage(ctx context.Context, myId string, package
 		}
 	}
 
+	endOfSubs := time.Hour * 24 * time.Duration(detailPremiumPkg.DurationInDays)
 	newData := domain.Subscription{
 		UserId:            myId,
 		PremiumPackagesId: packageId,
 		Status:            domain.SubsPending,
+		EndAt:             time.Now().Add(endOfSubs),
 	}
 	p, pErr := uc.subsRepo.CreateTx(ctx, tx, newData)
 	if pErr != nil {
@@ -185,17 +190,20 @@ func (uc *premiumUsecase) OrderPackage(ctx context.Context, myId string, package
 	})
 	if paErr != nil {
 		uc.gormTx.Rollback(tx)
-		return p, &exception.Error{
+		return res, &exception.Error{
 			Code: exception.IntenalError,
 			Err:  paErr,
 		}
 	}
 
+	copier.Copy(&res, &p)
+	res.PaymentId = payment.Id
+
 	uc.gormTx.Commit(tx)
 
 	go uc.requestPayment(payment.Id)
 
-	return p, nil
+	return res, nil
 }
 
 func (uc *premiumUsecase) requestPayment(paymentId int64) error {

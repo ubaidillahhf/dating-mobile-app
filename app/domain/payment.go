@@ -12,7 +12,7 @@ type Payment struct {
 }
 
 type PaymentCallbackRequest struct {
-	Id         int64  `json:"id" validate:"required"`
+	Id         int64  `json:"paymentId" validate:"required"`
 	UserId     string `json:"userId" validate:"required"`
 	RefContext string `json:"refContext" validate:"required,oneof=subscription"`
 	RefId      string `json:"refId" validate:"required"`

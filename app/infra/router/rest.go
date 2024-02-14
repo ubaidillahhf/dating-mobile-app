@@ -56,5 +56,8 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 	premium.Get("/", middleware.ValidateToken, premiumHandler.GetPackagePremium)
 	premium.Post("/order", middleware.ValidateToken, premiumHandler.OrderPackage)
 
+	callback := v1.Group("/callbacks")
+	callback.Post("/payment", premiumHandler.PaymentCallback)
+
 	router.Listen(":" + conf.Get("PORT"))
 }

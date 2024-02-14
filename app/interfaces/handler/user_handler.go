@@ -102,7 +102,7 @@ func (co *userHandler) GetRandomProfiles(c *fiber.Ctx) error {
 
 	skip, limit, defPage, defPerPage := helper.NormalizeAndGetDefaultPagination(queryParam.Page, queryParam.PerPage)
 
-	responses, countTotal, err := co.uc.GetRandomProfiles(ctx, domain.Meta{Skip: skip, Limit: limit}, myId)
+	responses, total, err := co.uc.GetRandomProfiles(ctx, domain.Meta{Skip: skip, Limit: limit}, myId)
 	if err != nil {
 		return c.JSON(presenter.Error(err.Err.Error(), nil, err.Code))
 	}
@@ -110,7 +110,7 @@ func (co *userHandler) GetRandomProfiles(c *fiber.Ctx) error {
 	return c.JSON(presenter.Success("Success", presenter.FindMatchTransform(responses), presenter.Meta(presenter.MetaProps{
 		Page:    defPage,
 		PerPage: defPerPage,
-		Total:   countTotal,
+		Total:   total,
 	})))
 }
 

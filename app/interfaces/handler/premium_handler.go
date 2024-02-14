@@ -4,10 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/ubaidillahhf/dating-service/app/domain"
+	"github.com/ubaidillahhf/dating-service/app/infra/exception"
 	"github.com/ubaidillahhf/dating-service/app/infra/presenter"
 	"github.com/ubaidillahhf/dating-service/app/infra/utility/helper"
+	xvalidator "github.com/ubaidillahhf/dating-service/app/infra/validator"
 	"github.com/ubaidillahhf/dating-service/app/usecases"
 )
 
@@ -53,12 +56,48 @@ func (co *premiumHandler) GetPackagePremium(c *fiber.Ctx) error {
 	})))
 }
 
-// PaymentCallback implements IPremiumHandler.
-func (*premiumHandler) PaymentCallback(c *fiber.Ctx) error {
-	panic("unimplemented")
+func (co *premiumHandler) PaymentCallback(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	request := domain.PaymentCallbackRequest{}
+	if err := c.BodyParser(&request); err != nil {
+		return c.JSON(presenter.Error(err.Error(), nil, exception.BadRequestError))
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(request); err != nil {
+		return c.JSON(presenter.Error("error", xvalidator.GenerateHumanizeError(request, err), exception.BadRequestError))
+	}
+
+	res, resErr := co.uc.PaymentCallback(ctx, request)
+	if resErr != nil {
+		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
+	}
+
+	return c.JSON(presenter.Success("Success", res, nil))
 }
 
-// OrderPackage implements IPremiumHandler.
-func (*premiumHandler) OrderPackage(c *fiber.Ctx) error {
-	panic("unimplemented")
+func (co *premiumHandler) OrderPackage(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	myId := c.Locals("myId").(string)
+
+	request := domain.Subscription{}
+	if err := c.BodyParser(&request); err != nil {
+		return c.JSON(presenter.Error(err.Error(), nil, exception.BadRequestError))
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(request); err != nil {
+		return c.JSON(presenter.Error("error", xvalidator.GenerateHumanizeError(request, err), exception.BadRequestError))
+	}
+
+	res, resErr := co.uc.OrderPackage(ctx, myId, request.PremiumPackagesId)
+	if resErr != nil {
+		return c.JSON(presenter.Error(resErr.Err.Error(), nil, resErr.Code))
+	}
+
+	return c.JSON(presenter.Success("Success", res, nil))
 }
