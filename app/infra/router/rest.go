@@ -34,6 +34,7 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 	// hadler
 	userHandler := handler.NewUserHandler(&useCase.UserUsecase)
 	swipeHandler := handler.NewSwipeHandler(&useCase.SwipeUsecase)
+	premiumHandler := handler.NewPremiumHandler(&useCase.PremiumUsecase)
 
 	// service route
 	router.Get("/", handler.GetTopRoute)
@@ -50,6 +51,10 @@ func Init(useCase usecases.AppUseCase, conf config.IConfig) {
 
 	swipe := v1.Group("/swipes")
 	swipe.Post("/", middleware.ValidateToken, swipeHandler.Swipe)
+
+	premium := v1.Group("/premiums")
+	premium.Get("/", middleware.ValidateToken, premiumHandler.GetPackagePremium)
+	premium.Post("/order", middleware.ValidateToken, premiumHandler.OrderPackage)
 
 	router.Listen(":" + conf.Get("PORT"))
 }

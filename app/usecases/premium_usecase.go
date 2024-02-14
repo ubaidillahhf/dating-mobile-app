@@ -12,20 +12,20 @@ import (
 	logx "github.com/ubaidillahhf/dating-service/app/infra/utility/logger"
 )
 
-type IPremiumMemberUsecase interface {
+type IPremiumUsecase interface {
 	GetPackagePremium(ctx context.Context, meta domain.Meta) ([]domain.PremiumPackage, int64, *exception.Error)
-	SubscribePackage(ctx context.Context, myId string, packageId int64) (domain.Subscription, *exception.Error)
+	OrderPackage(ctx context.Context, myId string, packageId int64) (domain.Subscription, *exception.Error)
 	PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (domain.Payment, *exception.Error)
 }
 
-func NewPremiumMemberUsecase(
+func NewPremiumUsecase(
 	repo repository.IPremiumPackageRepository,
 	userRepo repository.IUserRepository,
 	subsRepo repository.ISubscriptionRepository,
 	paymentRepo repository.IPaymentRepository,
 	gormTx repository.IGormTx,
-) IPremiumMemberUsecase {
-	return &premiumMemberUsecase{
+) IPremiumUsecase {
+	return &premiumUsecase{
 		repo:        repo,
 		userRepo:    userRepo,
 		subsRepo:    subsRepo,
@@ -34,7 +34,7 @@ func NewPremiumMemberUsecase(
 	}
 }
 
-type premiumMemberUsecase struct {
+type premiumUsecase struct {
 	repo        repository.IPremiumPackageRepository
 	userRepo    repository.IUserRepository
 	subsRepo    repository.ISubscriptionRepository
@@ -42,7 +42,7 @@ type premiumMemberUsecase struct {
 	gormTx      repository.IGormTx
 }
 
-func (uc *premiumMemberUsecase) GetPackagePremium(ctx context.Context, meta domain.Meta) (res []domain.PremiumPackage, total int64, err *exception.Error) {
+func (uc *premiumUsecase) GetPackagePremium(ctx context.Context, meta domain.Meta) (res []domain.PremiumPackage, total int64, err *exception.Error) {
 	data, total, dErr := uc.repo.Get(ctx, meta)
 	if dErr != nil {
 		return res, total, &exception.Error{
@@ -54,7 +54,7 @@ func (uc *premiumMemberUsecase) GetPackagePremium(ctx context.Context, meta doma
 	return data, total, nil
 }
 
-func (uc *premiumMemberUsecase) PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (res domain.Payment, err *exception.Error) {
+func (uc *premiumUsecase) PaymentCallback(ctx context.Context, data domain.PaymentCallbackRequest) (res domain.Payment, err *exception.Error) {
 
 	paymentStatus := domain.PaymentWaiting
 	subsStatus := domain.SubsPending
@@ -143,7 +143,7 @@ func (uc *premiumMemberUsecase) PaymentCallback(ctx context.Context, data domain
 	return
 }
 
-func (uc *premiumMemberUsecase) SubscribePackage(ctx context.Context, myId string, packageId int64) (res domain.Subscription, err *exception.Error) {
+func (uc *premiumUsecase) OrderPackage(ctx context.Context, myId string, packageId int64) (res domain.Subscription, err *exception.Error) {
 
 	detailPremiumPkg, dpmErr := uc.repo.Find(ctx, packageId)
 	if dpmErr != nil {
@@ -198,7 +198,7 @@ func (uc *premiumMemberUsecase) SubscribePackage(ctx context.Context, myId strin
 	return p, nil
 }
 
-func (uc *premiumMemberUsecase) requestPayment(paymentId int64) error {
+func (uc *premiumUsecase) requestPayment(paymentId int64) error {
 
 	logx.Create().Info().Msg(fmt.Sprintf("initiate payment create with id: %d. call payment gateway...", paymentId))
 

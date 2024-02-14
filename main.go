@@ -20,11 +20,19 @@ func main() {
 	// Setup Repository
 	userRepository := repository.NewUserRepository(database)
 	swipeRepository := repository.NewSwipeRepository(database)
+	premiumRepository := repository.NewPremiumPackageRepository(database)
+	subsRepository := repository.NewSubscriptionRepository(database)
+	paymentRepository := repository.NewPaymentRepository(database)
+	gormTx := repository.NewGormTx(database)
 
 	// Setup Service
 	useCase := usecases.NewAppUseCase(
 		userRepository,
 		swipeRepository,
+		premiumRepository,
+		subsRepository,
+		paymentRepository,
+		gormTx,
 	)
 
 	router.Init(useCase, configuration)
