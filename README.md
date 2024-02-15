@@ -12,9 +12,9 @@
 ```bash
     docker composer up -d
 ```
-2. app is running, and ready to GO
+2. app is running with port 8910, and ready to GO
 
-### Running development with live reload
+### Running with live reload (for Development)
 
 1. install [Air](https://github.com/cosmtrek/air)
 2. create .air.toml at root (if not exist)
@@ -32,6 +32,7 @@
 ### Documentation
 
 - Access the DB documentation at [this address](https://dbdocs.io/ubed.dev/dating-service)
+- Postman docs at [this address](https://documenter.getpostman.com/view/23782351/2sA2r6WPJE)
 
 ### Create new migration
 - Example:

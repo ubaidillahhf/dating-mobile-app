@@ -21,13 +21,13 @@ type UserUseCaseSuite struct {
 	suite.Suite
 	usecase  IUserUsecase
 	userRepo repository_mock.MockUserRepository
-	newData  domain.User
+	newData  domain.RegisterRequest
 }
 
 func (s *UserUseCaseSuite) SetupTest() {
 	s.userRepo = repository_mock.MockUserRepository{}
 	s.usecase = NewUserUsecase(&s.userRepo)
-	s.newData = domain_mock.MakeMockUser()
+	s.newData = domain_mock.MakeMockUserRegister()
 }
 
 func (s *UserUseCaseSuite) Test_UserRegister() {

@@ -10,3 +10,12 @@ func MakeMockUser() domain.User {
 		Password: "a",
 	}
 }
+
+func MakeMockUserRegister() domain.RegisterRequest {
+	return domain.RegisterRequest{
+		Fullname: "a",
+		Username: "a",
+		Email:    "a@gmail.com",
+		Password: "a",
+	}
+}
