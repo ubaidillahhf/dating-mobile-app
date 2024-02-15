@@ -18,5 +18,8 @@ migrate_down_1:
 migration_fix:
 	migrate -path db/migration -database ${PSQL_MIGRATION_URL} force VERSION
 
+test:
+	go test -v -cover -short ./...
+
 db_docs:
 	dbdocs build db/database.dbml
