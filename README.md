@@ -16,7 +16,7 @@
 ```bash
     docker composer up -d
 ```
-2. app is running with port 8910, and ready to GO
+3. app is running with port 8910, and ready to GO
 
 ### Running with live reload (for Development)
 
