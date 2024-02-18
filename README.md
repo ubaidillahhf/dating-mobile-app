@@ -8,7 +8,11 @@
 
 ### Running with docker composer
 
-1. run
+1. change .env for property PSQL_HOST (example at .env.docker-compose.example):
+```bash
+    PSQL_HOST=postgres
+```
+2. run
 ```bash
     docker composer up -d
 ```
